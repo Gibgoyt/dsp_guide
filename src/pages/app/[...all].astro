@@ -1,0 +1,221 @@
+---
+import 'src/styles/global.css'
+import { firebaseJwtValidator } from 'src/lib/auth/firebase-jwt-validator'
+import { createLogger } from 'src/lib/logger'
+import App from 'src/applications_solid/app/App.tsx'
+
+/**
+ * IMPORTANT: THIS IS A CATCH-ALL ROUTE FOR A SOLIDJS SINGLE PAGE APPLICATION
+ *
+ * This file implements a catch-all route ([...all].astro) that:
+ * 1. Handles ALL app routes under /app/*
+ * 2. Loads a SolidJS single page application (NOT React!)
+ * 3. Provides Firebase JWT authentication protection
+ * 4. Validates both Firebase and backend user existence
+ * 5. Passes the Firebase token to the SolidJS app for API calls
+ *
+ * The SolidJS app handles its own routing internally using @solidjs/router
+ * All client-side navigation happens within the SPA without page reloads
+ */
+
+ // execute each GET /app on CF Workers (i.e. CF Pages server)
+export const prerender = false;
+
+const logger = createLogger('APP_PROTECTION')
+
+// ==== AUTH PROTECTION LOGIC ====
+logger.debug('Processing protected app route', { pathname: Astro.url.pathname })
+
+const firebaseAuthToken = Astro.cookies.get('firebase-auth-token')
+
+logger.debug('Cookie inspection', {
+  hasFirebaseToken: Boolean(firebaseAuthToken?.value)
+})
+
+// If no Firebase auth token is present, redirect to sign-in
+if (!firebaseAuthToken || !firebaseAuthToken.value) {
+  logger.info('No Firebase auth token found for protected route, redirecting to sign-in')
+  return Astro.redirect('/auth/sign-in', 302)
+}
+
+try {
+  logger.debug('Validating token for protected route access')
+  
+  let validation: any = { isValid: false, isExpired: false };
+  let provider = 'firebase'; // Only Firebase is allowed here
+
+  validation = firebaseJwtValidator.validateTokenBasic(firebaseAuthToken.value);
+  logger.debug('Validated with Firebase');
+  
+  logger.debug('Token validation result', {
+    provider,
+    isValid: validation.isValid,
+    isExpired: validation.isExpired
+  })
+  
+  if (!validation.isValid) {
+    throw new Error(validation.error || 'Invalid token')
+  }
+
+  if (validation.isExpired) {
+    throw new Error('Token has expired')
+  }
+
+  // Store user info in locals for use in pages
+  if (validation.payload) {
+    Astro.locals.user = {
+      sub: validation.payload.sub,
+      email: validation.payload.email,
+      username: validation.payload.name || validation.payload.email,
+      emailVerified: validation.payload.email_verified || false,
+      groups: [], 
+      tokenUse: 'id'
+    }
+    
+    logger.debug('User info stored in locals', {
+      email: Astro.locals.user?.email,
+      provider
+    })
+  }
+
+  // After Firebase token validation succeeds, check if backend user exists
+  if (validation.isValid && !validation.isExpired) {
+    try {
+      // Check if backend user exists
+      const backendResponse = await fetch('https://devbackend.splitdo.app:8443/api/users/me', {
+        headers: {
+          'Authorization': `Bearer ${firebaseAuthToken.value}`,
+          'Content-Type': 'application/json',
+          'Origin': 'https://splitdo.app'
+        }
+      });
+
+      if (backendResponse.status === 404) {
+        // Firebase user exists but backend user doesn't
+        logger.info('Firebase user valid but backend user missing, redirecting to sign-up step 2');
+        return Astro.redirect('/auth/sign-up?firebaseUserExists=true&backendUserExists=false', 302);
+      }
+
+      if (!backendResponse.ok) {
+        throw new Error(`Backend user check failed: ${backendResponse.status}`);
+      }
+
+      // Both users exist, proceed normally
+      logger.debug('Both Firebase and backend users exist, proceeding to app');
+
+    } catch (error) {
+      logger.error('Backend user check failed', error);
+      // On error, allow app access but log warning
+      logger.warn('Proceeding to app despite backend check failure');
+    }
+  }
+
+  logger.debug('Protected route access granted')
+  // Token exists and is valid, allow access
+} catch (error) {
+  logger.error('Protected route validation failed', error)
+  // Invalid token, clear it and redirect to sign-in
+  Astro.cookies.delete('firebase-auth-token', { path: '/' })
+
+  logger.info('Redirecting to sign-in due to validation failure')
+  return Astro.redirect('/auth/sign-in', 302)
+}
+// ==== END AUTH PROTECTION LOGIC ====
+
+// ==== ROUTE VALIDATION LOGIC ====
+logger.debug('Processing route validation', { pathname: Astro.url.pathname })
+
+// Extract route from URL
+const pathSegments = Astro.url.pathname.split('/').filter(Boolean)
+const appRoute = pathSegments[1] // The part after /app/
+
+// Define valid routes (new structure)
+const validRoutes = ['dashboard', 'splitdo-exchange', 'profile']
+
+// Handle route validation with legacy support
+if (pathSegments[0] === 'app') {
+  // Legacy wallet route - redirect to new splitdo-exchange
+  if (appRoute === 'wallet') {
+    logger.info('Legacy wallet route detected, redirecting to splitdo-exchange', {
+      pathname: Astro.url.pathname
+    })
+    return Astro.redirect('/app/splitdo-exchange', 302)
+  }
+
+  if (!appRoute || appRoute === 'dashboard') {
+    // Valid: /app/ or /app/dashboard
+    logger.debug('Valid dashboard route', { appRoute: appRoute || 'default' })
+  } else if (validRoutes.includes(appRoute)) {
+    // Valid: /app/splitdo-exchange or /app/profile
+    logger.debug('Valid app route', { appRoute })
+  } else {
+    // Invalid: redirect to dashboard
+    logger.info('Invalid app route detected, redirecting to dashboard', {
+      pathname: Astro.url.pathname,
+      appRoute
+    })
+    return Astro.redirect('/app/dashboard', 302)
+  }
+}
+
+logger.debug('Route validation complete')
+// ==== END ROUTE VALIDATION LOGIC ====
+
+// Set security headers
+Astro.response.headers.set('X-Frame-Options', 'DENY')
+---
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Primary Meta Tags -->
+  <title>SPLITDO Dashboard - Bill Splitting & Crypto Expense Management</title>
+  <meta name="title" content="SPLITDO Dashboard - Bill Splitting & Crypto Expense Management" />
+  <meta name="description" content="Manage your crypto expenses, track bills, and settle with blockchain payments. SPLITDO dashboard for secure bill splitting on Solana." />
+  
+  <!-- Robots - Prevent indexing of protected app pages -->
+  <meta name="robots" content="noindex, nofollow" />
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="SPLITDO Dashboard" />
+  <meta property="og:description" content="Manage your crypto expenses and split bills with blockchain payments" />
+  <meta property="og:site_name" content="SplitDo" />
+  
+  <meta name="theme-color" content="#0A0E1A">
+  <meta name="color-scheme" content="light dark">
+  
+  <!-- Chii Remote Debugging - CLIENT SIDE ONLY -->
+  <script type="module">
+    // Only run on client-side, not in CloudFlare Workers
+    if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+      // Set Chii server URL before loading target.js
+      window.ChiiServerUrl = 'https://devbackend.splitdo.app:2083/';
+      
+      // Debug log
+      console.log('🔧 Chii client-side setup:', {
+        ChiiServerUrl: window.ChiiServerUrl,
+        isClient: typeof window !== 'undefined'
+      });
+      
+      // Dynamically load the target.js script
+      const script = document.createElement('script');
+      script.src = 'https://devbackend.splitdo.app:2083/target.js';
+      script.async = true;
+      script.onload = () => {
+        console.log('🔍 Chii target.js loaded successfully');
+      };
+      script.onerror = (error) => {
+        console.warn('⚠️ Failed to load Chii target.js:', error);
+      };
+      document.head.appendChild(script);
+    }
+  </script>
+</head>
+<body class="h-full overflow-x-hidden" style="background: var(--crypto-bg-primary); color: var(--crypto-text-primary);">
+<!-- Render SolidJS App with Astro's integration -->
+<App client:only="solid-js" firebaseToken={firebaseAuthToken?.value} />
+</body>
+</html>
