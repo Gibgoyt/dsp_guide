@@ -11,6 +11,7 @@ import Ch09 from './chapters/Ch09_Windowing'
 import Ch10 from './chapters/Ch10_Convolution'
 import Ch11 from './chapters/Ch11_RadarApplications'
 import Ch12 from './chapters/Ch12_InterviewCheatsheet'
+import Ch13 from './chapters/Ch13_Bibliography'
 
 export interface Chapter {
   slug: string
@@ -32,6 +33,7 @@ export const chapters: Chapter[] = [
   { slug: 'convolution',        shortTitle: 'Convolution',           title: '10. Convolution & the Convolution Theorem', Component: Ch10 },
   { slug: 'applications-radar', shortTitle: 'Apps & Radar',          title: '11. Real-World Applications & Radar',      Component: Ch11 },
   { slug: 'interview',          shortTitle: 'Interview Cheat-Sheet', title: '12. Interview Cheat-Sheet',                Component: Ch12 },
+  { slug: 'bibliography',       shortTitle: 'Bibliography',          title: '13. Bibliography & References',            Component: Ch13 },
 ]
 
 export const chapterBySlug = (slug: string | undefined): Chapter => {
