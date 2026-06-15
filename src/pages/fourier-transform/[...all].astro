@@ -1,0 +1,54 @@
+---
+import 'src/styles/global.css'
+import App from 'src/applications_solid/fourier-transform/App.tsx'
+import { chapters } from 'src/applications_solid/fourier-transform/chapters'
+
+/**
+ * FOURIER TRANSFORM GUIDE - NO AUTHENTICATION REQUIRED
+ *
+ * Catch-all route ([...all].astro) that:
+ * 1. Handles ALL routes under /fourier-transform/*
+ * 2. Loads a SolidJS single page application
+ * 3. NO authentication - publicly accessible & indexable
+ *
+ * The SolidJS app handles its own routing internally via pushState.
+ */
+
+export const prerender = true
+
+export async function getStaticPaths() {
+  return [
+    { params: { all: undefined } },
+    ...chapters.map((c) => ({ params: { all: c.slug } })),
+  ]
+}
+---
+<!DOCTYPE html>
+<html lang="en" class="h-full dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>The Fourier Transform — A Complete Guide</title>
+  <meta name="title" content="The Fourier Transform — A Complete Guide" />
+  <meta
+    name="description"
+    content="A rigorous, interactive guide to the Fourier Transform: from the four cousin transforms (CFT / Series / DTFT / DFT) to the FFT, windowing, convolution, and how two FFTs per frame turn raw radar ADC samples into a range-Doppler map."
+  />
+
+  <meta name="robots" content="index, follow" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="The Fourier Transform — A Complete Guide" />
+  <meta
+    property="og:description"
+    content="From sines and cosines to the FFT and radar range-Doppler processing. Interactive widgets, worked examples, no hand-waving."
+  />
+
+  <meta name="theme-color" content="#0a0a0a" />
+  <meta name="color-scheme" content="dark" />
+</head>
+<body class="h-full overflow-x-hidden bg-zinc-950 text-white">
+  <App client:only="solid-js" />
+</body>
+</html>
