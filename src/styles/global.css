@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* Scan Leptos (Rust) sub-apps for Tailwind class names used inside view! macros.
+ * Tailwind v4's automatic scanner doesn't pick up .rs files by default. */
+@source "../applications_leptos/**/*.rs";
+
 @theme {
   --color-mode: light dark;
 }

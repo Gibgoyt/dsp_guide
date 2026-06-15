@@ -1,0 +1,81 @@
+---
+import 'src/styles/global.css'
+import { chapterSlugs } from 'src/applications_leptos/laplace-transformation/chapters_for_astro'
+
+/**
+ * LAPLACE TRANSFORM GUIDE - NO AUTHENTICATION REQUIRED
+ *
+ * Catch-all route ([...all].astro) that:
+ * 1. Handles ALL routes under /laplace-transformation/*
+ * 2. Loads a Leptos (Rust/WASM) single-page application
+ * 3. NO authentication - publicly accessible & indexable
+ *
+ * The Leptos app handles its own routing internally via leptos_router (CSR /
+ * BrowserIntegration). Unknown sub-paths fall back to the first chapter,
+ * matching the behavior of the SolidJS sibling guides.
+ */
+
+export const prerender = true
+
+export async function getStaticPaths() {
+  return [
+    { params: { all: undefined } },
+    ...chapterSlugs.map((slug) => ({ params: { all: slug } })),
+  ]
+}
+---
+<!DOCTYPE html>
+<html lang="en" class="h-full dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>The Laplace Transform — A Complete Guide</title>
+  <meta name="title" content="The Laplace Transform — A Complete Guide" />
+  <meta
+    name="description"
+    content="A rigorous, interactive guide to the Laplace Transform: from Pierre-Simon Laplace and the Fourier→Laplace generalization to the s-plane, transfer functions, poles and zeros, the Z-transform bridge via z = e^(sT), FIR vs IIR stability on the unit circle, and a calibrated take on where Laplace earns its place in radar signal processing."
+  />
+
+  <meta name="robots" content="index, follow" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="The Laplace Transform — A Complete Guide" />
+  <meta
+    property="og:description"
+    content="From Fourier's imaginary axis to the full complex s-plane. Pole/zero stability, transfer functions, the Z-transform bridge, FIR vs IIR, and where Laplace actually earns its place in radar work."
+  />
+
+  <meta name="theme-color" content="#0a0a0a" />
+  <meta name="color-scheme" content="dark" />
+</head>
+<body class="h-full overflow-x-hidden bg-zinc-950 text-white">
+  <div id="wasm-root" class="contents"></div>
+
+  <script type="module">
+    import init, { mount_laplace_app } from '/wasm/laplace-transformation/laplace_wasm_app.js'
+
+    try {
+      await init('/wasm/laplace-transformation/laplace_wasm_app_bg.wasm')
+      mount_laplace_app()
+    } catch (err) {
+      console.error('Failed to load Laplace WASM app:', err)
+      const root = document.getElementById('wasm-root')
+      if (root) {
+        root.innerHTML = `
+          <div class="min-h-screen flex items-center justify-center p-8">
+            <div class="max-w-xl text-center">
+              <h1 class="text-3xl font-bold text-red-400 mb-4">Failed to load WASM app</h1>
+              <p class="text-zinc-400 mb-4">Build the Leptos sub-app from the repo root:</p>
+              <code class="bg-zinc-800 px-4 py-2 rounded text-violet-300 font-mono text-sm">
+                ./build.sh ./src/applications_leptos/laplace-transformation/
+              </code>
+              <p class="text-zinc-500 mt-4 text-sm">${err.message}</p>
+            </div>
+          </div>
+        `
+      }
+    }
+  </script>
+</body>
+</html>

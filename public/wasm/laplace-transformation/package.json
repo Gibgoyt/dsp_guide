@@ -1,0 +1,15 @@
+{
+  "name": "laplace-wasm-app",
+  "type": "module",
+  "version": "0.1.0",
+  "files": [
+    "laplace_wasm_app_bg.wasm",
+    "laplace_wasm_app.js",
+    "laplace_wasm_app.d.ts"
+  ],
+  "main": "laplace_wasm_app.js",
+  "types": "laplace_wasm_app.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}
