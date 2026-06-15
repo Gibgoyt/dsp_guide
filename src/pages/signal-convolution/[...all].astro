@@ -1,0 +1,54 @@
+---
+import 'src/styles/global.css'
+import App from 'src/applications_solid/signal-convolution/App.tsx'
+import { chapters } from 'src/applications_solid/signal-convolution/chapters'
+
+/**
+ * SIGNAL CONVOLUTION GUIDE - NO AUTHENTICATION REQUIRED
+ *
+ * Catch-all route ([...all].astro) that:
+ * 1. Handles ALL routes under /signal-convolution/*
+ * 2. Loads a SolidJS single page application
+ * 3. NO authentication - publicly accessible & indexable
+ *
+ * The SolidJS app handles its own routing internally via pushState.
+ */
+
+export const prerender = true
+
+export async function getStaticPaths() {
+  return [
+    { params: { all: undefined } },
+    ...chapters.map((c) => ({ params: { all: c.slug } })),
+  ]
+}
+---
+<!DOCTYPE html>
+<html lang="en" class="h-full dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Signal Convolution — A Complete Guide</title>
+  <meta name="title" content="Signal Convolution — A Complete Guide" />
+  <meta
+    name="description"
+    content="A rigorous, interactive guide to Signal Convolution: from impulse responses and LTI systems to the Convolution Theorem, fast FFT-based convolution, circular vs linear traps, overlap-add streaming, 2D image kernels, and the radar matched filter."
+  />
+
+  <meta name="robots" content="index, follow" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Signal Convolution — A Complete Guide" />
+  <meta
+    property="og:description"
+    content="Sliding, multiplying, summing — and why convolution is the single most important operation in all of signals and systems. Interactive widgets, worked examples, radar matched-filter capstone."
+  />
+
+  <meta name="theme-color" content="#0a0a0a" />
+  <meta name="color-scheme" content="dark" />
+</head>
+<body class="h-full overflow-x-hidden bg-zinc-950 text-white">
+  <App client:only="solid-js" />
+</body>
+</html>
