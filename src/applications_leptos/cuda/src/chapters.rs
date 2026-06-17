@@ -41,6 +41,16 @@ pub const CHAPTERS: &[Chapter] = &[
         short_title: "malloc / memcpy / free",
         title: "4. cudaMalloc, cudaMemcpy, cudaFree — The Host-Side API",
     },
+    Chapter {
+        slug: "higher-level-libraries",
+        short_title: "Thrust, cuBLAS, cuFFT",
+        title: "5. Higher-level Libraries — Thrust, cuBLAS, cuFFT",
+    },
+    Chapter {
+        slug: "bibliography",
+        short_title: "Bibliography",
+        title: "6. Bibliography & References",
+    },
 ];
 
 pub fn chapter_by_slug(slug: &str) -> &'static Chapter {

@@ -5,11 +5,15 @@ mod ch01_dim3_and_int3;
 mod ch02_memory_spaces;
 mod ch03_async_and_sync;
 mod ch04_malloc_memcpy_free;
+mod ch05_higher_level_libraries;
+mod ch06_bibliography;
 
 pub use ch01_dim3_and_int3::Ch01;
 pub use ch02_memory_spaces::Ch02;
 pub use ch03_async_and_sync::Ch03;
 pub use ch04_malloc_memcpy_free::Ch04;
+pub use ch05_higher_level_libraries::Ch05;
+pub use ch06_bibliography::Ch06;
 
 // --- LeetGPU sub-section (NOT in the sidebar; lives at /cuda/leetgpu) ------
 mod leetgpu_index;
@@ -31,6 +35,8 @@ pub fn render_chapter(slug: &str) -> View {
         "memory-spaces" => view! { <Ch02/> }.into_view(),
         "async-and-sync" => view! { <Ch03/> }.into_view(),
         "malloc-memcpy-free" => view! { <Ch04/> }.into_view(),
+        "higher-level-libraries" => view! { <Ch05/> }.into_view(),
+        "bibliography" => view! { <Ch06/> }.into_view(),
         _ => view! { <Ch01/> }.into_view(),
     }
 }

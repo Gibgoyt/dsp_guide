@@ -23,6 +23,8 @@ export const chapterSlugs = [
   'memory-spaces',
   'async-and-sync',
   'malloc-memcpy-free',
+  'higher-level-libraries',
+  'bibliography',
 ] as const
 
 export const leetgpuProblemSlugs = [
